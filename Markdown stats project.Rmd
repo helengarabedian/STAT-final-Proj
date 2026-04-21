@@ -1,0 +1,173 @@
+---
+title: "Stats Project"
+author: "Jack Drummond, Helen Garabedian"
+date: "2026-04-19"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+
+astronauts <- read_excel("astronauts.xlsx")
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Question 1: Do military pilots fly more than civilians? 
+
+```{r}
+install.packages("readxl")   
+library(readxl)
+
+library(readxl)
+data <- read_excel("astronauts.xlsx")
+
+names(data)
+
+astro1 <- data
+
+astro1$Military_Status <- ifelse(
+  is.na(astro1$`Military Rank`) & is.na(astro1$`Military Branch`),
+  "Civilian",
+  "Military"
+)
+table(astro1$Military_Status)
+
+astro1 <- astro1[, c("Military_Status", "Space Flights")]
+astro1 <- na.omit(astro1)
+
+aggregate(`Space Flights` ~ Military_Status, data = astro1, mean)
+aggregate(`Space Flights` ~ Military_Status, data = astro1, median)
+aggregate(`Space Flights` ~ Military_Status, data = astro1, sd)
+
+table(astro1$Military_Status)
+
+```
+
+## Part A: Box plot 
+```{r}
+boxplot(`Space Flights` ~ Military_Status,
+        data = astro1,
+        main = "Space Flights by Background",
+        xlab = "Astronaut Background",
+        ylab = "Number of Space Flights")
+
+means <- tapply(astro1$`Space Flights`, astro1$Military_Status, mean)
+
+points(1:2, means, col = "red", pch = 19, cex = 1.5)
+
+means <- tapply(astro1$`Space Flights`, astro1$Military_Status, mean)
+sds <- tapply(astro1$`Space Flights`, astro1$Military_Status, sd)
+ns <- tapply(astro1$`Space Flights`, astro1$Military_Status, length)
+
+se <- sds / sqrt(ns)
+
+```
+## Part B: Bar Graph 
+```{r}
+bar_centers <- barplot(means,
+                       ylim = c(0, max(means + se) + 0.5),
+                       main = "Average Space Flights by Background",
+                       ylab = "Mean Number of Flights",
+                       col = c("lightblue", "lightgreen"))
+```
+
+## Part C: Two-sided T-test 
+```{r}
+t.test(`Space Flights` ~ Military_Status, data = astro1)
+```
+## Question 2: How has astronaut age changed throughout astronaut selection.
+
+```{r}
+names(data)
+
+head(data$`Birth Date`)
+
+install.packages("lubridate")
+
+library(lubridate)
+
+birth_year <- as.numeric(format(as.Date(astronauts$`Birth Date`, format = "%m/%d/%Y"), "%Y"))
+astronauts$Age_at_Selection <- astronauts$Year - birth_year
+
+astro2 <- astronauts[, c("Year", "Age_at_Selection")]
+astro2 <- na.omit(astro2)
+
+plot(astro2$Year, astro2$Age_at_Selection,
+     pch = 19,
+     main = "Astronaut Age at Selection Over Time",
+     xlab = "Selection Year",
+     ylab = "Age at Selection")
+
+abline(lm(Age_at_Selection ~ Year, data = astro2), lwd = 2)
+
+summary(lm(Age_at_Selection ~ Year, data = astro2))
+
+```
+## Part A: Scatter plot 
+```{r}
+plot(astro2$Year, astro2$Age_at_Selection,
+     main = "Astronaut Age at Selection Over Time",
+     xlab = "Selection Year",
+     ylab = "Age at Selection",
+     pch = 19)
+
+abline(lm(Age_at_Selection ~ Year, data = astro2), lwd = 2)
+```
+## Part B: Linear Regression 
+```{r}
+model2 <- lm(Age_at_Selection ~ Year, data = astro2)
+summary(model2)
+```
+## Question 3: Has gender composition of astronaut canidates changed over time? 
+
+```{r}
+astro3 <- astronauts[, c("Year", "Gender")]
+astro3 <- na.omit(astro3)
+
+astro3$Gender <- trimws(tolower(as.character(astro3$Gender)))
+
+table(astro3$Gender)
+
+gender_counts <- table(astro3$Year, astro3$Gender)
+gender_props <- prop.table(gender_counts, margin = 1)
+
+colnames(gender_props)
+
+years <- as.numeric(rownames(gender_props))
+```
+## Part A: Graphing proportion of female astronauts over time 
+```{r}
+plot(years, gender_props[, "female"],
+     type = "b",
+     pch = 19,
+     ylim = c(0, 1),
+     main = "Proportion of Female Astronauts Over Time",
+     xlab = "Selection Year",
+     ylab = "Proportion Female")
+```
+## Part B: Regression Analysis 
+```{r}
+astro3$Female <- ifelse(astro3$Gender == "female", 1, 0)
+
+model3 <- lm(Female ~ Year, data = astro3)
+summary(model3)
+```
+
+```{r}
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
