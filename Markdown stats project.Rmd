@@ -49,7 +49,7 @@ table(astro1$Military_Status)
 
 ```
 
-## Part A: Box plot -----example change
+## Part A: Box plot
 ```{r}
 boxplot(`Space Flights` ~ Military_Status,
         data = astro1,
