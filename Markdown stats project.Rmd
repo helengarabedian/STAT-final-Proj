@@ -81,6 +81,27 @@ bar_centers <- barplot(means,
 ```{r}
 t.test(`Space Flights` ~ Military_Status, data = astro1)
 ```
+
+## Part D: Bootstrap and Histogram
+```{r}
+civilian <- astro1$`Space Flights`[astro1$Military_Status == "Civilian"]
+military <- astro1$`Space Flights`[astro1$Military_Status == "Military"]
+
+boot_diff <- replicate(10000, {
+  sample_civ <- sample(civilian, replace = TRUE)
+  sample_mil <- sample(military, replace = TRUE)
+  mean(sample_mil) - mean(sample_civ)
+})
+
+quantile(boot_diff, c(0.025, 0.975))
+
+hist(boot_diff,
+     main = "Bootstrap Distribution: Difference in Mean Space Flights",
+     xlab = "Military - Civilian",
+     breaks = 30)
+abline(v = 0, col = "red", lwd = 2)
+```
+
 ## Question 2: How has astronaut age changed throughout astronaut selection.
 
 ```{r}
@@ -97,14 +118,6 @@ astronauts$Age_at_Selection <- astronauts$Year - birth_year
 
 astro2 <- astronauts[, c("Year", "Age_at_Selection")]
 astro2 <- na.omit(astro2)
-
-plot(astro2$Year, astro2$Age_at_Selection,
-     pch = 19,
-     main = "Astronaut Age at Selection Over Time",
-     xlab = "Selection Year",
-     ylab = "Age at Selection")
-
-abline(lm(Age_at_Selection ~ Year, data = astro2), lwd = 2)
 
 summary(lm(Age_at_Selection ~ Year, data = astro2))
 
@@ -161,13 +174,3 @@ summary(model3)
 
 ```{r}
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
